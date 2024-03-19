@@ -1,10 +1,11 @@
 {
+  "type": "commonjs",
   "name": "headgear",
   "version": "0.1.0",
   "description": "Zu-tool Discord Bot",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "ts-node src/index.ts"
   },
   "keywords": [],
   "author": "unlimish",
@@ -18,6 +19,12 @@
   },
   "homepage": "https://github.com/unlimish/headgear#readme",
   "dependencies": {
-    "discord.js": "^14.14.1"
+    "discord.js": "^14.14.1",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.30",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.2"
   }
 }
