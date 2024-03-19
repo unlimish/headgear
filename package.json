@@ -1,0 +1,23 @@
+{
+  "name": "headgear",
+  "version": "0.1.0",
+  "description": "Zu-tool Discord Bot",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "unlimish",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/unlimish/headgear.git"
+  },
+  "bugs": {
+    "url": "https://github.com/unlimish/headgear/issues"
+  },
+  "homepage": "https://github.com/unlimish/headgear#readme",
+  "dependencies": {
+    "discord.js": "^14.14.1"
+  }
+}
