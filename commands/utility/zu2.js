@@ -1,17 +1,17 @@
-import { Interaction } from "discord.js";
-import * as config from "../../../config.json";
+const { Interaction, SlashCommandBuilder } = require("discord.js");
+const config = require("../../config.json");
 
-const handleWeatherCommand = async (interaction: Interaction) => {
+const handleWeatherCommand = async (interaction) => {
   const placeId = config.placeId;
   const apiUrl = `https://zutool.jp/api/getweatherstatus/${placeId}`;
   try {
-    const fetch = await import("node-fetch");
+    const fetch = await require("node-fetch");
     const response = await fetch.default(apiUrl);
     const responseData = await response.text();
     const data = JSON.parse(responseData);
     console.log(data);
     let formattedWeather = "";
-    data.yesterday.forEach((entry: any) => {
+    data.yesterday.forEach((entry) => {
       let pressureEmoji = "";
       switch (entry.pressure_level) {
         case "0":
@@ -45,13 +45,6 @@ const handleWeatherCommand = async (interaction: Interaction) => {
     await interaction.reply("Error fetching weather data: $error");
   }
 };
-
-client.on("interactionCreate", async (interaction: Interaction) => {
-  if (!interaction.isCommand()) return;
-  if (interaction.commandName === "weather") {
-    await handleWeatherCommand(interaction);
-  }
-});
 
 module.exports = {
   data: new SlashCommandBuilder()
