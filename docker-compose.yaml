@@ -8,7 +8,7 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./config.json:/app/config.json
-    command: sh -c "node deploy-commands.js && node index.js"
+    command: sh -c "cd /app/ && node deploy-commands.js && node index.js"
     restart: always
     networks:
       - discord_network

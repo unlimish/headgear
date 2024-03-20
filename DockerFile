@@ -1,9 +1,11 @@
 FROM ubuntu:latest
 WORKDIR /app
+RUN sed -i.bak -e "s%http://us.archive.ubuntu.com/ubuntu/%http://ftp.iij.ad.jp/pub/linux/ubuntu/archive/%g" /etc/apt/sources.list
 RUN apt update && apt install -y git nodejs npm curl
 RUN git clone https://github.com/unlimish/Headgear.git .
 RUN npm install
 RUN npm install -g n
 RUN n lts
-RUN node deploy-commands.js
+COPY ./config.json /app/config.json
+RUN cd /app && node deploy-commands.js
 ENTRYPOINT ["node", "index.js"]
