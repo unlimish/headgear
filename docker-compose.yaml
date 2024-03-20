@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  headgear:
+    image: headgear-zu2
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./config.json:/app/config.json
+    command: sh -c "node deploy-commands.js && node index.js"
+    restart: always
+    networks:
+      - discord_network
+
+networks:
+  discord_network:
+    driver: bridge
