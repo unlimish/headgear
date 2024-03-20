@@ -1,10 +1,16 @@
-const { Interaction, SlashCommandBuilder } = require("discord.js");
+const {
+  Interaction,
+  SlashCommandBuilder,
+  spoiler,
+  inlineCode,
+} = require("discord.js");
 const config = require("../../config.json");
 
 const handleWeatherCommand = async (interaction, opt_date, opt_place) => {
   console.log(`${opt_date}, ${opt_place}`);
   const placeId = config.placeId;
   const apiUrl = `https://zutool.jp/api/getweatherstatus/${placeId}`;
+  const date = "Today";
   await interaction.deferReply();
   try {
     const response = await fetch(apiUrl);
@@ -12,25 +18,32 @@ const handleWeatherCommand = async (interaction, opt_date, opt_place) => {
     const data = JSON.parse(responseData);
     let formattedWeather = "";
     let filter = data.today;
-    formattedWeather += `Weather for ${data.place_name}:\n`;
     if (opt_date) {
       switch (opt_date) {
         case "sl_yesterday":
           filter = data.yesterday;
+          date = "Yesterday";
           break;
         case "sl_today":
           filter = data.today;
+          date = "Today";
           break;
         case "sl_tomorrow":
           filter = data.tommorow;
+          data = "Tomorrow";
           break;
         case "sl_da_tomorrow":
           filter = data.dayaftertomorrow;
+          date = "Day after tomorrow";
           break;
         default:
           filter = data.today;
+          date = "Today";
       }
     }
+
+    formattedWeather += `${spoiler(data.place_name)} (${date})\n`;
+
     filter.forEach((entry) => {
       let pressureEmoji = "";
       switch (entry.pressure_level) {
@@ -68,7 +81,11 @@ const handleWeatherCommand = async (interaction, opt_date, opt_place) => {
       }
 
       // if (time_start <= Number(entry.time) && Number(entry.time) <= end_time) {
-      formattedWeather += `${entry.time}:00 ${entry.weather} ${entry.temp} ℃ ${pressureEmoji} ${entry.pressure} hPa\n`;
+      formattedWeather += `${String(entry.time).padStart(2, "0")} ${
+        entry.weather
+      } ${String(entry.temp).padStart(4, "0")} ℃ ${pressureEmoji} ${
+        entry.pressure
+      } hPa\n`;
       console.log(formattedWeather);
       // if (formattedWeather.length >= 1900) {
       //   interaction.followUp(`${formattedWeather}`);
