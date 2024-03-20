@@ -8,8 +8,8 @@ module.exports = {
     const command = interaction.client.commands.get(interaction.commandName);
 
     if (!command) {
-      console.log(
-        `[WARNING] The command "${interaction.commandName}" does not exist.`
+      console.error(
+        `No command matching ${interaction.commandName} was found.`
       );
       return;
     }

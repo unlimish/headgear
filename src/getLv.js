@@ -1,13 +1,7 @@
-const { Interaction, SlashCommandBuilder } = require("discord.js");
-const config = require("../../config.json");
-
-const handleWeatherCommand = async (interaction) => {
+export const getPressureLv = async (currentTime) => {
   const placeId = config.placeId;
   const apiUrl = `https://zutool.jp/api/getweatherstatus/${placeId}`;
-  await interaction.deferReply();
   try {
-    const time_start = Number("06");
-    const end_time = Number("12");
     const response = await fetch(apiUrl);
     const responseData = await response.text();
     const data = JSON.parse(responseData);
@@ -48,16 +42,12 @@ const handleWeatherCommand = async (interaction) => {
           break;
       }
 
-      // if (time_start <= Number(entry.time) && Number(entry.time) <= end_time) {
-      formattedWeather += `${entry.time}:00 ${entry.weather} ${entry.temp} ℃ ${pressureEmoji} ${entry.pressure} hPa\n`;
-      console.log(formattedWeather);
-      if (formattedWeather.length >= 1900) {
-        interaction.followUp(`${formattedWeather}`);
-        formattedWeather = "";
-      }
-      // }
-    });
-    await interaction.editReply(`${formattedWeather}`);
+      if (currentTime == Number(entry.time)) {
+        // if (time_start <= Number(entry.time) && Number(entry.time) <= end_time) {
+        currentWeather += `${entry.weather} ${entry.temp} ℃ ${pressureEmoji} ${entry.pressure} hPa\n`;
+        console.log(currentWeather);
+        return (currentWeather);
+    };
   } catch (error) {
     console.error("Error fetching weather data:", error);
     await interaction.reply({
@@ -65,13 +55,4 @@ const handleWeatherCommand = async (interaction) => {
       ephemeral: true,
     });
   }
-};
-
-module.exports = {
-  data: new SlashCommandBuilder()
-    .setName("zu2")
-    .setDescription("Get info from Zutool.jp"),
-  async execute(interaction) {
-    await handleWeatherCommand(interaction);
-  },
 };

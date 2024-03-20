@@ -1,11 +1,11 @@
 {
-  "type": "commonjs",
   "name": "headgear",
   "version": "0.1.0",
   "description": "Zu-tool Discord Bot",
   "main": "index.js",
   "scripts": {
-    "start": "ts-node src/index.ts"
+    "start": "node index.js",
+    "deploy": "node deploy-commands.js"
   },
   "keywords": [],
   "author": "unlimish",
