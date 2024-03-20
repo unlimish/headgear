@@ -1,5 +1,4 @@
 const { Events } = require("discord.js");
-const { execute } = require("../commands/utility/weather");
 
 module.exports = {
   name: Events.ClientReady,

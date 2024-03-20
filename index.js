@@ -29,11 +29,11 @@ for (const folder of commandFolders) {
 }
 
 client.on("ready", () => {
-  setInterval(() => {
-    client.user.setActivity({
-      name: `${client.ws.ping}ms`,
-    });
-  }, 3600000);
+  // setInterval(() => {
+  client.user.setActivity({
+    name: `${client.ws.ping}ms`,
+  });
+  // }, 3600000);
 });
 
 const eventsPath = path.join(__dirname, "events");
