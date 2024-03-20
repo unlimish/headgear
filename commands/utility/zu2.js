@@ -11,7 +11,7 @@ const handleWeatherCommand = async (interaction, opt_date, opt_place) => {
   const placeId = config.placeId;
   const apiUrl = `https://zutool.jp/api/getweatherstatus/${placeId}`;
   let date = "Today";
-  await interaction.deferReply();
+  await interaction.deferReply({ ephemeral: true });
   try {
     const response = await fetch(apiUrl);
     const responseData = await response.text();
@@ -41,8 +41,11 @@ const handleWeatherCommand = async (interaction, opt_date, opt_place) => {
           date = "Today";
       }
     }
-
-    formattedWeather += `${spoiler(data.place_name)} (${date})\n\n`;
+    if (!opt_place && !opt_date) {
+      formattedWeather += `# 🗼 ${date}\n\n`;
+    } else {
+      formattedWeather += `${spoiler(data.place_name)} (${date})\n\n`;
+    }
 
     filter.forEach((entry) => {
       let pressureEmoji = "";
@@ -93,7 +96,10 @@ const handleWeatherCommand = async (interaction, opt_date, opt_place) => {
       // }
       // }
     });
-    await interaction.editReply(`${formattedWeather}`);
+    await interaction.editReply({
+      content: `${formattedWeather}`,
+      ephemeral: true,
+    });
   } catch (error) {
     console.error("Error fetching weather data:", error);
     await interaction.reply({
