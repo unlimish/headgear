@@ -5,10 +5,17 @@ const {
   inlineCode,
 } = require("discord.js");
 const config = require("../../config.json");
+const { getCityCode } = require("../../src/getCityCode");
+
+let placeId = config.placeId;
 
 const handleWeatherCommand = async (interaction, opt_date, opt_place) => {
-  console.log(`${opt_date}, ${opt_place}`);
-  const placeId = config.placeId;
+  if (opt_place) {
+    search_placeId = await getCityCode(opt_place);
+    console.log("serarch_placeId: " + `${search_placeId}`);
+    if (search_placeId != -1) placeId = String(search_placeId);
+  }
+
   const apiUrl = `https://zutool.jp/api/getweatherstatus/${placeId}`;
   let date = "Today";
   await interaction.deferReply({ ephemeral: true });
@@ -89,7 +96,7 @@ const handleWeatherCommand = async (interaction, opt_date, opt_place) => {
       )} ${entry.weather} ${inlineCode(
         String(entry.temp).padStart(4, " ") + " °C"
       )} ${pressureEmoji} ${inlineCode(entry.pressure + " hPa")}\n`;
-      console.log(formattedWeather);
+      // console.log(formattedWeather);
       // if (formattedWeather.length >= 1900) {
       //   interaction.followUp(`${formattedWeather}`);
       //   formattedWeather = "";
@@ -134,6 +141,7 @@ module.exports = {
     ),
   async execute(interaction, opt_date, opt_place) {
     opt_date = interaction.options.getString("date");
+    opt_place = interaction.options.getString("city_name");
     await handleWeatherCommand(interaction, opt_date, opt_place);
   },
 };
