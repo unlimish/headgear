@@ -10,7 +10,7 @@ const handleWeatherCommand = async (interaction, opt_date, opt_place) => {
   console.log(`${opt_date}, ${opt_place}`);
   const placeId = config.placeId;
   const apiUrl = `https://zutool.jp/api/getweatherstatus/${placeId}`;
-  const date = "Today";
+  let date = "Today";
   await interaction.deferReply();
   try {
     const response = await fetch(apiUrl);
@@ -30,7 +30,7 @@ const handleWeatherCommand = async (interaction, opt_date, opt_place) => {
           break;
         case "sl_tomorrow":
           filter = data.tommorow;
-          data = "Tomorrow";
+          date = "Tomorrow";
           break;
         case "sl_da_tomorrow":
           filter = data.dayaftertomorrow;
@@ -42,7 +42,7 @@ const handleWeatherCommand = async (interaction, opt_date, opt_place) => {
       }
     }
 
-    formattedWeather += `${spoiler(data.place_name)} (${date})\n`;
+    formattedWeather += `${spoiler(data.place_name)} (${date})\n\n`;
 
     filter.forEach((entry) => {
       let pressureEmoji = "";
@@ -81,11 +81,11 @@ const handleWeatherCommand = async (interaction, opt_date, opt_place) => {
       }
 
       // if (time_start <= Number(entry.time) && Number(entry.time) <= end_time) {
-      formattedWeather += `${String(entry.time).padStart(2, "0")} ${
-        entry.weather
-      } ${String(entry.temp).padStart(4, "0")} ℃ ${pressureEmoji} ${
-        entry.pressure
-      } hPa\n`;
+      formattedWeather += `${inlineCode(
+        String(entry.time).padStart(2, "0") + ":00"
+      )} ${entry.weather} ${inlineCode(
+        String(entry.temp).padStart(4, " ") + " °C"
+      )} ${pressureEmoji} ${inlineCode(entry.pressure + " hPa")}\n`;
       console.log(formattedWeather);
       // if (formattedWeather.length >= 1900) {
       //   interaction.followUp(`${formattedWeather}`);
