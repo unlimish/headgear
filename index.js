@@ -28,12 +28,53 @@ for (const folder of commandFolders) {
   }
 }
 
+const getJstHour = () => {
+  const dateStr = new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" });
+  const localDate = new Date(dateStr);
+  return localDate.getHours();
+};
+
+async function updatePressureActivity(client) {
+  try {
+    const placeId = config.placeId || 13209;
+    const response = await fetch(`https://zutool.jp/api/getweatherstatus/${placeId}`);
+    const data = await response.json();
+    const jstHour = getJstHour();
+    const entry = data.today.find((e) => Number(e.time) === jstHour);
+    if (entry) {
+      let pressureEmoji = "";
+      switch (entry.pressure_level) {
+        case "0":
+        case "1":
+          pressureEmoji = "🆗";
+          break;
+        case "2":
+          pressureEmoji = "📉";
+          break;
+        case "3":
+          pressureEmoji = "⚠️";
+          break;
+        case "4":
+          pressureEmoji = "💣";
+          break;
+        default:
+          pressureEmoji = "😇";
+          break;
+      }
+      const activityName = `東京: ${entry.pressure} hPa ${pressureEmoji}`;
+      client.user.setActivity({ name: activityName });
+      console.log(`[Activity] Updated: ${activityName}`);
+    }
+  } catch (error) {
+    console.error("[Activity] Failed to update pressure status:", error);
+  }
+}
+
 client.on("ready", () => {
-  // setInterval(() => {
-  client.user.setActivity({
-    name: `${client.ws.ping}ms`,
-  });
-  // }, 3600000);
+  updatePressureActivity(client);
+  setInterval(() => {
+    updatePressureActivity(client);
+  }, 900000); // 15 mins
 });
 
 const eventsPath = path.join(__dirname, "events");

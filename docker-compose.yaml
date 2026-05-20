@@ -8,6 +8,7 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./config.json:/app/config.json
+      - ./data:/app/data
     command: sh -c "cd /app/ && node deploy-commands.js && node index.js"
     restart: always
     networks:

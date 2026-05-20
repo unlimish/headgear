@@ -6,13 +6,18 @@ const {
 } = require("discord.js");
 const config = require("../../config.json");
 const { getCityCode } = require("../../src/getCityCode");
-
-let placeId = config.placeId;
+const { getUserCity } = require("../../src/userSettings");
 
 const handleWeatherCommand = async (interaction, opt_date, opt_place) => {
+  let placeId = String(config.placeId);
+  const saved = getUserCity(interaction.user.id);
+  if (saved) {
+    placeId = String(saved.cityCode);
+  }
+
   if (opt_place) {
-    search_placeId = await getCityCode(opt_place);
-    console.log("serarch_placeId: " + `${search_placeId}`);
+    const search_placeId = await getCityCode(opt_place);
+    console.log("search_placeId: " + `${search_placeId}`);
     if (search_placeId != -1) placeId = String(search_placeId);
   }
 
@@ -48,7 +53,7 @@ const handleWeatherCommand = async (interaction, opt_date, opt_place) => {
           date = "Today";
       }
     }
-    if (!opt_place && !opt_date) {
+    if (!opt_place && !opt_date && !saved) {
       formattedWeather += `# 🗼 ${date}\n\n`;
     } else {
       formattedWeather += `${spoiler(data.place_name)} (${date})\n\n`;

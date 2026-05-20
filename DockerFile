@@ -1,11 +1,18 @@
-FROM ubuntu:latest
+FROM node:20-slim
+
 WORKDIR /app
-RUN sed -i.bak -e "s%http://us.archive.ubuntu.com/ubuntu/%http://ftp.iij.ad.jp/pub/linux/ubuntu/archive/%g" /etc/apt/sources.list
-RUN apt update && apt install -y git nodejs npm curl
-RUN git clone https://github.com/unlimish/Headgear.git .
-RUN npm install
-RUN npm install -g n
-RUN n lts
-COPY ./config.json /app/config.json
-RUN cd /app && node deploy-commands.js
+
+# Install build dependencies if needed, though for discord.js they are usually not required
+# Copy package manifests
+COPY package.json pnpm-lock.yaml* yarn.lock* package-lock.json* ./
+
+# Install production dependencies
+RUN npm install --omit=dev
+
+# Copy local code (instead of cloning from github to include local changes)
+COPY . .
+
+# Ensure data directory exists
+RUN mkdir -p data
+
 ENTRYPOINT ["node", "index.js"]
