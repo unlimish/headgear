@@ -65,24 +65,25 @@ const formatWeatherData = (data, selectedValue, isDefault) => {
         break;
     }
 
+    let weatherEmoji = "";
     switch (entry.weather) {
       case "100":
-        entry.weather = ":sunny:";
+        weatherEmoji = ":sunny:";
         break;
       case "200":
-        entry.weather = ":cloud:";
+        weatherEmoji = ":cloud:";
         break;
       case "300":
-        entry.weather = ":cloud_rain:";
+        weatherEmoji = ":cloud_rain:";
         break;
       default:
-        entry.weather = ":innocent:";
+        weatherEmoji = ":innocent:";
         break;
     }
 
     formattedWeather += `${inlineCode(
       String(entry.time).padStart(2, "0") + ":00"
-    )} ${entry.weather} ${inlineCode(
+    )} ${weatherEmoji} ${inlineCode(
       String(entry.temp).padStart(4, " ") + " °C"
     )} ${pressureEmoji} ${inlineCode(entry.pressure + " hPa")}\n`;
   });
