@@ -1,6 +1,6 @@
 const fs = require("node:fs");
 const path = require("node:path");
-const { Client, Collection, GatewayIntentBits } = require("discord.js");
+const { Client, Collection, GatewayIntentBits, ActivityType } = require("discord.js");
 const config = require("./config.json");
 const { token } = config;
 
@@ -44,27 +44,36 @@ async function updatePressureActivity(client) {
     const entry = data.today.find((e) => Number(e.time) === jstHour);
     if (entry) {
       let pressureEmoji = "";
+      let status = "online";
       switch (entry.pressure_level) {
         case "0":
         case "1":
           pressureEmoji = "🆗";
+          status = "online"; // Green dot
           break;
         case "2":
           pressureEmoji = "📉";
+          status = "idle";   // Orange dot (Slight warning)
           break;
         case "3":
           pressureEmoji = "⚠️";
+          status = "dnd";    // Red dot (Warning)
           break;
         case "4":
           pressureEmoji = "💣";
+          status = "dnd";    // Red dot (Bomb)
           break;
         default:
           pressureEmoji = "😇";
+          status = "online";
           break;
       }
       const activityName = `🗼${entry.pressure} hPa ${pressureEmoji}`;
-      client.user.setActivity({ name: activityName });
-      console.log(`[Activity] Updated: ${activityName}`);
+      client.user.setPresence({
+        activities: [{ name: "custom", type: ActivityType.Custom, state: activityName }],
+        status: status,
+      });
+      console.log(`[Activity] Updated presence: ${activityName} (status: ${status})`);
     }
   } catch (error) {
     console.error("[Activity] Failed to update pressure status:", error);
