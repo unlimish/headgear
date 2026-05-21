@@ -85,7 +85,7 @@ const formatWeatherData = (data, selectedValue, isDefault) => {
       String(entry.time).padStart(2, "0") + ":00"
     )} ${weatherEmoji} ${inlineCode(
       String(entry.temp).padStart(4, " ") + " °C"
-    )} ${pressureEmoji} ${inlineCode(entry.pressure + " hPa")}\n`;
+    )} ${pressureEmoji} ${inlineCode(Number(entry.pressure).toFixed(1) + " hPa")}\n`;
   });
 
   return formattedWeather;
