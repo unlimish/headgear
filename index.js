@@ -29,10 +29,22 @@ for (const folder of commandFolders) {
   }
 }
 
-const getJstHour = () => {
+const getNearestJstHourInfo = () => {
   const dateStr = new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" });
   const localDate = new Date(dateStr);
-  return localDate.getHours();
+  const minutes = localDate.getMinutes();
+  let hour = localDate.getHours();
+  let isNextDay = false;
+
+  if (minutes >= 30) {
+    hour += 1;
+    if (hour >= 24) {
+      hour = 0;
+      isNextDay = true;
+    }
+  }
+
+  return { hour, isNextDay };
 };
 
 async function updatePressureActivity(client) {
@@ -40,8 +52,9 @@ async function updatePressureActivity(client) {
     const placeId = config.placeId || 13209;
     const response = await fetch(`https://zutool.jp/api/getweatherstatus/${placeId}`);
     const data = await response.json();
-    const jstHour = getJstHour();
-    const entry = data.today.find((e) => Number(e.time) === jstHour);
+    const { hour, isNextDay } = getNearestJstHourInfo();
+    const targetDayData = isNextDay ? data.tommorow : data.today;
+    const entry = targetDayData.find((e) => Number(e.time) === hour);
     if (entry) {
       let pressureEmoji = "";
       let status = "online";
@@ -84,7 +97,7 @@ client.on("ready", () => {
   updatePressureActivity(client);
   setInterval(() => {
     updatePressureActivity(client);
-  }, 900000); // 15 mins
+  }, 3600000); // 1 hour
 });
 
 const eventsPath = path.join(__dirname, "events");
