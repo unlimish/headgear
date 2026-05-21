@@ -3,10 +3,92 @@ const {
   SlashCommandBuilder,
   spoiler,
   inlineCode,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  ComponentType,
 } = require("discord.js");
 const config = require("../../config.json");
 const { getCityCode } = require("../../src/getCityCode");
 const { getUserCity } = require("../../src/userSettings");
+
+const DATE_CONFIGS = [
+  { value: "sl_yesterday", label: "昨日", apiField: "yesterday", englishLabel: "Yesterday" },
+  { value: "sl_today", label: "今日", apiField: "today", englishLabel: "Today" },
+  { value: "sl_tomorrow", label: "明日", apiField: "tommorow", englishLabel: "Tomorrow" },
+  { value: "sl_da_tomorrow", label: "明後日", apiField: "dayaftertomorrow", englishLabel: "Day after tomorrow" }
+];
+
+const createButtonsRow = (currentValue, disabled = false) => {
+  const row = new ActionRowBuilder();
+  DATE_CONFIGS.forEach((cfg) => {
+    const isCurrent = cfg.value === currentValue;
+    const btn = new ButtonBuilder()
+      .setCustomId(`zu2_${cfg.value}`)
+      .setLabel(cfg.label)
+      .setStyle(isCurrent ? ButtonStyle.Primary : ButtonStyle.Secondary)
+      .setDisabled(disabled);
+    row.addComponents(btn);
+  });
+  return row;
+};
+
+const formatWeatherData = (data, selectedValue, isDefault) => {
+  const cfg = DATE_CONFIGS.find(c => c.value === selectedValue) || DATE_CONFIGS[1];
+  let filter = data[cfg.apiField] || [];
+  let formattedWeather = "";
+
+  if (isDefault) {
+    formattedWeather += `# 🗼 ${cfg.englishLabel}\n\n`;
+  } else {
+    formattedWeather += `${spoiler(data.place_name)} (${cfg.englishLabel})\n\n`;
+  }
+
+  filter.forEach((entry) => {
+    let pressureEmoji = "";
+    switch (entry.pressure_level) {
+      case "0":
+      case "1":
+        pressureEmoji = ":ok:";
+        break;
+      case "2":
+        pressureEmoji = ":arrow_heading_down:";
+        break;
+      case "3":
+        pressureEmoji = ":warning:";
+        break;
+      case "4":
+        pressureEmoji = ":bomb:";
+        break;
+      default:
+        pressureEmoji = ":innocent:";
+        break;
+    }
+
+    switch (entry.weather) {
+      case "100":
+        entry.weather = ":sunny:";
+        break;
+      case "200":
+        entry.weather = ":cloud:";
+        break;
+      case "300":
+        entry.weather = ":cloud_rain:";
+        break;
+      default:
+        entry.weather = ":innocent:";
+        break;
+    }
+
+    formattedWeather += `${inlineCode(
+      String(entry.time).padStart(2, "0") + ":00"
+    )} ${entry.weather} ${inlineCode(
+      String(entry.temp).padStart(4, " ") + " °C"
+    )} ${pressureEmoji} ${inlineCode(entry.pressure + " hPa")}\n`;
+  });
+
+  return formattedWeather;
+};
 
 const handleWeatherCommand = async (interaction, opt_date, opt_place) => {
   let placeId = String(config.placeId);
@@ -22,102 +104,73 @@ const handleWeatherCommand = async (interaction, opt_date, opt_place) => {
   }
 
   const apiUrl = `https://zutool.jp/api/getweatherstatus/${placeId}`;
-  let date = "Today";
+  const initialValue = opt_date || "sl_today";
+
   await interaction.deferReply({ ephemeral: true });
   try {
     const response = await fetch(apiUrl);
     const responseData = await response.text();
     const data = JSON.parse(responseData);
-    let formattedWeather = "";
-    let filter = data.today;
-    if (opt_date) {
-      switch (opt_date) {
-        case "sl_yesterday":
-          filter = data.yesterday;
-          date = "Yesterday";
-          break;
-        case "sl_today":
-          filter = data.today;
-          date = "Today";
-          break;
-        case "sl_tomorrow":
-          filter = data.tommorow;
-          date = "Tomorrow";
-          break;
-        case "sl_da_tomorrow":
-          filter = data.dayaftertomorrow;
-          date = "Day after tomorrow";
-          break;
-        default:
-          filter = data.today;
-          date = "Today";
-      }
-    }
-    if (!opt_place && !opt_date && !saved) {
-      formattedWeather += `# 🗼 ${date}\n\n`;
-    } else {
-      formattedWeather += `${spoiler(data.place_name)} (${date})\n\n`;
-    }
 
-    filter.forEach((entry) => {
-      let pressureEmoji = "";
-      switch (entry.pressure_level) {
-        case "0":
-        case "1":
-          pressureEmoji = ":ok:";
-          break;
-        case "2":
-          pressureEmoji = ":arrow_heading_down:";
-          break;
-        case "3":
-          pressureEmoji = ":warning:";
-          break;
-        case "4":
-          pressureEmoji = ":bomb:";
-          break;
-        default:
-          pressureEmoji = ":innocent:";
-          break;
-      }
+    const isDefault = !opt_place && !saved;
 
-      switch (entry.weather) {
-        case "100":
-          entry.weather = ":sunny:";
-          break;
-        case "200":
-          entry.weather = ":cloud:";
-          break;
-        case "300":
-          entry.weather = ":cloud_rain:";
-          break;
-        default:
-          entry.weather = ":innocent:";
-          break;
-      }
+    const getResponsePayload = (selectedVal, disabled = false) => {
+      const content = formatWeatherData(data, selectedVal, isDefault);
+      const row = createButtonsRow(selectedVal, disabled);
+      return {
+        content,
+        components: [row],
+        ephemeral: true,
+      };
+    };
 
-      // if (time_start <= Number(entry.time) && Number(entry.time) <= end_time) {
-      formattedWeather += `${inlineCode(
-        String(entry.time).padStart(2, "0") + ":00"
-      )} ${entry.weather} ${inlineCode(
-        String(entry.temp).padStart(4, " ") + " °C"
-      )} ${pressureEmoji} ${inlineCode(entry.pressure + " hPa")}\n`;
-      // console.log(formattedWeather);
-      // if (formattedWeather.length >= 1900) {
-      //   interaction.followUp(`${formattedWeather}`);
-      //   formattedWeather = "";
-      // }
-      // }
+    let currentValue = initialValue;
+    const initialPayload = getResponsePayload(currentValue);
+    const replyMessage = await interaction.editReply(initialPayload);
+
+    const collector = replyMessage.createMessageComponentCollector({
+      componentType: ComponentType.Button,
+      time: 60000,
     });
-    await interaction.editReply({
-      content: `${formattedWeather}`,
-      ephemeral: true,
+
+    collector.on("collect", async (i) => {
+      if (i.user.id !== interaction.user.id) {
+        await i.reply({
+          content: "このボタンはコマンドを実行した本人だけが使用できます。",
+          ephemeral: true,
+        });
+        return;
+      }
+
+      const matchedConfig = DATE_CONFIGS.find(cfg => `zu2_${cfg.value}` === i.customId);
+      if (matchedConfig) {
+        currentValue = matchedConfig.value;
+      }
+
+      const updatedPayload = getResponsePayload(currentValue);
+      await i.update(updatedPayload);
     });
+
+    collector.on("end", async () => {
+      try {
+        const disabledPayload = getResponsePayload(currentValue, true);
+        await interaction.editReply(disabledPayload);
+      } catch (err) {
+        // Ignored if interaction was deleted or expired
+      }
+    });
+
   } catch (error) {
     console.error("Error fetching weather data:", error);
-    await interaction.reply({
-      content: `Error fetching weather data: ${error}`,
-      ephemeral: true,
-    });
+    try {
+      await interaction.editReply({
+        content: `Error fetching weather data: ${error}`,
+        components: [],
+        ephemeral: true,
+      });
+    } catch (err) {
+      console.error("Failed to edit error reply:", err);
+    }
   }
 };
 

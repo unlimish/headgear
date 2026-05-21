@@ -62,7 +62,7 @@ async function updatePressureActivity(client) {
           pressureEmoji = "😇";
           break;
       }
-      const activityName = `東京: ${entry.pressure} hPa ${pressureEmoji}`;
+      const activityName = `🗼${entry.pressure} hPa ${pressureEmoji}`;
       client.user.setActivity({ name: activityName });
       console.log(`[Activity] Updated: ${activityName}`);
     }
