@@ -540,12 +540,21 @@
         if (savedLang) {
             setLanguage(savedLang);
         } else {
-            const browserLang = navigator.language || navigator.userLanguage;
-            if (browserLang.startsWith('ja')) {
-                setLanguage('ja');
+            let detectedLang = 'en';
+            if (navigator.languages && navigator.languages.length > 0) {
+                const jaIndex = navigator.languages.findIndex(l => l.toLowerCase().startsWith('ja'));
+                const enIndex = navigator.languages.findIndex(l => l.toLowerCase().startsWith('en'));
+                
+                if (jaIndex !== -1 && (enIndex === -1 || jaIndex < enIndex)) {
+                    detectedLang = 'ja';
+                }
             } else {
-                setLanguage('en');
+                const browserLang = navigator.language || navigator.userLanguage;
+                if (browserLang && browserLang.toLowerCase().startsWith('ja')) {
+                    detectedLang = 'ja';
+                }
             }
+            setLanguage(detectedLang);
         }
     </script>
 </body>
