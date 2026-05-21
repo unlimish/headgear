@@ -7,12 +7,14 @@ services:
       context: .
       dockerfile: Dockerfile
     volumes:
-      - ./config.json:/app/config.json
-      - ./data:/app/data
+      - headgear_data:/app/data
     command: sh -c "cd /app/ && node deploy-commands.js && node index.js"
     restart: always
     networks:
       - discord_network
+
+volumes:
+  headgear_data:
 
 networks:
   discord_network:
