@@ -11,16 +11,53 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+JP:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #0d0b18;
-            --card-bg: rgba(255, 255, 255, 0.03);
-            --card-border: rgba(255, 255, 255, 0.08);
-            --text-primary: #f3f4f6;
-            --text-secondary: #9ca3af;
-            --accent-primary: #6366f1;
-            --accent-hover: #4f46e5;
+            /* Light Theme */
+            --bg-color: #f9fafb;
+            --card-bg: rgba(0, 0, 0, 0.02);
+            --card-border: rgba(0, 0, 0, 0.06);
+            --text-primary: #111827;
+            --text-secondary: #4b5563;
+            --accent-primary: #4f46e5;
+            --accent-hover: #4338ca;
             --discord-color: #5865f2;
             --discord-hover: #4752c4;
-            --glow-color: rgba(99, 102, 241, 0.15);
+            --glow-color: rgba(79, 70, 229, 0.05);
+            --hero-gradient-start: #111827;
+            --hero-gradient-end: #4f46e5;
+            --logo-gradient-start: #4338ca;
+            --logo-gradient-end: #6366f1;
+            --lang-switch-bg: rgba(0, 0, 0, 0.04);
+            --command-type-bg: rgba(0, 0, 0, 0.04);
+            --command-type-border: rgba(0, 0, 0, 0.08);
+            --command-name-color: #4f46e5;
+            --footer-bg: rgba(249, 249, 251, 0.8);
+            --copyright-color: rgba(0, 0, 0, 0.4);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                /* Dark Theme */
+                --bg-color: #0d0b18;
+                --card-bg: rgba(255, 255, 255, 0.03);
+                --card-border: rgba(255, 255, 255, 0.08);
+                --text-primary: #f3f4f6;
+                --text-secondary: #9ca3af;
+                --accent-primary: #6366f1;
+                --accent-hover: #4f46e5;
+                --discord-color: #5865f2;
+                --discord-hover: #4752c4;
+                --glow-color: rgba(99, 102, 241, 0.15);
+                --hero-gradient-start: #ffffff;
+                --hero-gradient-end: #a5b4fc;
+                --logo-gradient-start: #a5b4fc;
+                --logo-gradient-end: #6366f1;
+                --lang-switch-bg: rgba(255, 255, 255, 0.05);
+                --command-type-bg: rgba(255, 255, 255, 0.05);
+                --command-type-border: rgba(255, 255, 255, 0.1);
+                --command-name-color: #a5b4fc;
+                --footer-bg: rgba(10, 8, 19, 0.5);
+                --copyright-color: rgba(255, 255, 255, 0.3);
+            }
         }
 
         * {
@@ -93,14 +130,14 @@
             font-size: 1.5rem;
             font-weight: 800;
             letter-spacing: 0.05em;
-            background: linear-gradient(to right, #a5b4fc, #6366f1);
+            background: linear-gradient(to right, var(--logo-gradient-start), var(--logo-gradient-end));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
         .lang-switch {
             display: flex;
-            background: rgba(255, 255, 255, 0.05);
+            background: var(--lang-switch-bg);
             border: 1px solid var(--card-border);
             border-radius: 9999px;
             padding: 2px;
@@ -145,7 +182,7 @@
             line-height: 1.2;
             margin-bottom: 1.5rem;
             letter-spacing: -0.02em;
-            background: linear-gradient(to bottom right, #ffffff 30%, #a5b4fc);
+            background: linear-gradient(to bottom right, var(--hero-gradient-start) 30%, var(--hero-gradient-end));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -279,7 +316,7 @@
         .command-name {
             font-family: monospace;
             font-size: 1.1rem;
-            color: #a5b4fc;
+            color: var(--command-name-color);
             font-weight: 600;
         }
 
@@ -293,8 +330,8 @@
             font-size: 0.75rem;
             padding: 0.25rem 0.75rem;
             border-radius: 9999px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: var(--command-type-bg);
+            border: 1px solid var(--command-type-border);
             color: var(--text-secondary);
             white-space: nowrap;
         }
@@ -304,7 +341,7 @@
             padding: 3rem 2rem;
             width: 100%;
             text-align: center;
-            background-color: rgba(10, 8, 19, 0.5);
+            background-color: var(--footer-bg);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
         }
@@ -329,7 +366,7 @@
 
         .copyright {
             font-size: 0.8rem;
-            color: rgba(255, 255, 255, 0.3);
+            color: var(--copyright-color);
             font-weight: 300;
         }
 
