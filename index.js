@@ -97,7 +97,7 @@ client.on("ready", () => {
   updatePressureActivity(client);
   setInterval(() => {
     updatePressureActivity(client);
-  }, 3600000); // 1 hour
+  }, 900000); // 15 mins
 });
 
 const eventsPath = path.join(__dirname, "events");
