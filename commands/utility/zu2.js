@@ -203,4 +203,7 @@ module.exports = {
     opt_place = interaction.options.getString("city_name");
     await handleWeatherCommand(interaction, opt_date, opt_place);
   },
+  DATE_CONFIGS,
+  createButtonsRow,
+  formatWeatherData,
 };
