@@ -1,6 +1,6 @@
 const fs = require("node:fs");
 const path = require("node:path");
-const { Client, Collection, GatewayIntentBits, ActivityType } = require("discord.js");
+const { Client, Collection, GatewayIntentBits, ActivityType, Events } = require("discord.js");
 const config = require("./config.json");
 const { token } = config;
 
@@ -93,7 +93,7 @@ async function updatePressureActivity(client) {
   }
 }
 
-client.on("ready", () => {
+client.on(Events.ClientReady, () => {
   updatePressureActivity(client);
   setInterval(() => {
     updatePressureActivity(client);
