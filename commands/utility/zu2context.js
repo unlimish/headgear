@@ -6,13 +6,24 @@ const {
   TextInputStyle,
   ActionRowBuilder,
   ComponentType,
+  ApplicationIntegrationType,
+  InteractionContextType,
 } = require("discord.js");
 const { getUserCity } = require("../../src/userSettings");
 
 module.exports = {
   data: new ContextMenuCommandBuilder()
     .setName("気圧の表示")
-    .setType(ApplicationCommandType.User),
+    .setType(ApplicationCommandType.User)
+    .setIntegrationTypes(
+      ApplicationIntegrationType.GuildInstall,
+      ApplicationIntegrationType.UserInstall
+    )
+    .setContexts(
+      InteractionContextType.Guild,
+      InteractionContextType.BotDM,
+      InteractionContextType.PrivateChannel
+    ),
   async execute(interaction) {
     const targetUser = interaction.targetUser;
     const saved = getUserCity(targetUser.id);

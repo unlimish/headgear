@@ -7,6 +7,8 @@ const {
   ButtonBuilder,
   ButtonStyle,
   ComponentType,
+  ApplicationIntegrationType,
+  InteractionContextType,
 } = require("discord.js");
 const config = require("../../config.json");
 const { getCityCode } = require("../../src/getCityCode");
@@ -197,6 +199,15 @@ module.exports = {
           { name: "Tomorrow", value: "sl_tomorrow" },
           { name: "Day after tomorrow", value: "sl_da_tomorrow" }
         )
+    )
+    .setIntegrationTypes(
+      ApplicationIntegrationType.GuildInstall,
+      ApplicationIntegrationType.UserInstall
+    )
+    .setContexts(
+      InteractionContextType.Guild,
+      InteractionContextType.BotDM,
+      InteractionContextType.PrivateChannel
     ),
   async execute(interaction, opt_date, opt_place) {
     opt_date = interaction.options.getString("date");
