@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>headgear - Discord Bot for Atmospheric Pressure Forecasts</title>
+    <meta name="description" content="Check atmospheric pressure forecasts directly on Discord to manage and predict weather-related headaches.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+JP:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0d0b18;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --accent-primary: #6366f1;
+            --accent-hover: #4f46e5;
+            --discord-color: #5865f2;
+            --discord-hover: #4752c4;
+            --glow-color: rgba(99, 102, 241, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: 'Outfit', 'Noto Sans JP', sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Ambient background glow */
+        .ambient-glow {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, var(--glow-color) 0%, rgba(13, 11, 24, 0) 70%);
+            top: -200px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        header {
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            background: linear-gradient(to right, #a5b4fc, #6366f1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .hero {
+            margin-bottom: 4rem;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.02em;
+            background: linear-gradient(to bottom right, #ffffff 30%, #a5b4fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto 2.5rem auto;
+            font-weight: 300;
+        }
+
+        .btn-discord {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            background-color: var(--discord-color);
+            color: #ffffff;
+            text-decoration: none;
+            padding: 1rem 2.25rem;
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 1.125rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 20px rgba(88, 101, 242, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-discord:hover {
+            background-color: var(--discord-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(88, 101, 242, 0.4);
+        }
+
+        .btn-discord svg {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            width: 100%;
+            margin-bottom: 5rem;
+        }
+
+        .feature-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 2.25rem 1.75rem;
+            text-align: left;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            border-color: rgba(99, 102, 241, 0.3);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .feature-icon-wrapper {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: rgba(99, 102, 241, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            color: var(--accent-primary);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        .feature-icon-wrapper svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .feature-card h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+        }
+
+        .feature-card p {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            font-weight: 300;
+        }
+
+        .commands-section {
+            width: 100%;
+            max-width: 700px;
+            text-align: left;
+            margin-bottom: 5rem;
+        }
+
+        .commands-section h2 {
+            font-size: 1.75rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            background: linear-gradient(to right, #ffffff, #a5b4fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .command-item {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .command-details {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .command-name {
+            font-family: monospace;
+            font-size: 1.1rem;
+            color: #a5b4fc;
+            font-weight: 600;
+        }
+
+        .command-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 300;
+        }
+
+        .command-type {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        footer {
+            border-top: 1px solid var(--card-border);
+            padding: 3rem 2rem;
+            width: 100%;
+            text-align: center;
+            background-color: rgba(10, 8, 19, 0.5);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--accent-primary);
+        }
+
+        .copyright {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.3);
+            font-weight: 300;
+        }
+
+        @media (max-width: 640px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            .hero p {
+                font-size: 1.1rem;
+            }
+            .command-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.75rem;
+            }
+            .command-type {
+                align-self: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-glow"></div>
+    <header>
+        <div class="logo">headgear</div>
+    </header>
+
+    <main class="container">
+        <section class="hero">
+            <h1>Predict Headaches,<br>Plan Your Day.</h1>
+            <p>A Discord bot fetching real-time atmospheric pressure forecasts in Japan from Zutool. Keep track of pressure changes to predict weather-related headaches.</p>
+            <a href="https://discord.com/oauth2/authorize?client_id=1219698709978153111" class="btn-discord" target="_blank" rel="noopener noreferrer">
+                <svg viewBox="0 0 127.14 96.36">
+                    <path d="M107.7,8.07A105.15,105.15,0,0,0,77.26,0a77.19,77.19,0,0,0-3.3,6.83A96.67,96.67,0,0,0,53.22,6.83,77.19,77.19,0,0,0,49.88,0,105.15,105.15,0,0,0,19.44,8.07C3.66,31.58-1.86,54.65,1,77.53A105.73,105.73,0,0,0,32,96.36a77.7,77.7,0,0,0,6.63-10.85,68.43,68.43,0,0,1-10.45-5c.87-.64,1.71-1.32,2.51-2a75.76,75.76,0,0,0,72.9,0c.8,0.7,1.64,1.38,2.51,2a68.43,68.43,0,0,1-10.45,5,77.7,77.7,0,0,0,6.63,10.85,105.73,105.73,0,0,0,31-18.83C129.07,49.27,122.8,26.43,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53S36.18,40.36,42.45,40.36,53.9,46,53.9,53,48.72,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.24,60,73.24,53S78.41,40.36,84.69,40.36,96.14,46,96.14,53,91,65.69,84.69,65.69Z"/>
+                </svg>
+                Add to Discord
+            </a>
+        </section>
+
+        <section class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon-wrapper">
+                    <!-- Graph icon -->
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                </div>
+                <h3>Pressure Forecasts</h3>
+                <p>Fetch real-time atmospheric pressure trends and warnings for municipalities across Japan directly using Zutool data.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon-wrapper">
+                    <!-- User icon -->
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                </div>
+                <h3>Personal Install</h3>
+                <p>Support for Discord User Installable App. Add to your personal profile to check forecast inside any DM or guild without server installation.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon-wrapper">
+                    <!-- Clock/Activity icon -->
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                </div>
+                <h3>Auto Presence</h3>
+                <p>Updates client presence status automatically every 15 minutes to reflect the current local atmospheric pressure and warning levels.</p>
+            </div>
+        </section>
+
+        <section class="commands-section">
+            <h2>Commands</h2>
+            
+            <div class="command-item">
+                <div class="command-details">
+                    <span class="command-name">/zu2 [city_name] [date]</span>
+                    <span class="command-desc">Retrieve pressure forecasts with interactive date toggle buttons.</span>
+                </div>
+                <span class="command-type">Slash Command</span>
+            </div>
+
+            <div class="command-item">
+                <div class="command-details">
+                    <span class="command-name">/zu2set [city_name]</span>
+                    <span class="command-desc">Save your default city for commands. Clear configuration by passing no arguments.</span>
+                </div>
+                <span class="command-type">Slash Command</span>
+            </div>
+
+            <div class="command-item">
+                <div class="command-details">
+                    <span class="command-name">Show Pressure (気圧の表示)</span>
+                    <span class="command-desc">Right-click on any user -> Apps to fetch forecast for their registered city.</span>
+                </div>
+                <span class="command-type">Context Menu</span>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-links">
+            <a href="./TERMS_OF_SERVICE.html">Terms of Service</a>
+            <a href="./PRIVACY_POLICY.html">Privacy Policy</a>
+            <a href="https://github.com/unlimish/headgear" target="_blank" rel="noopener noreferrer">GitHub Repository</a>
+        </div>
+        <p class="copyright">Copyright &copy; 2026 unlimish. All rights reserved.</p>
+    </footer>
+</body>
+</html>
