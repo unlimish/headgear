@@ -8,6 +8,8 @@ const {
   ComponentType,
   ApplicationIntegrationType,
   InteractionContextType,
+  ButtonBuilder,
+  ButtonStyle,
 } = require("discord.js");
 const { getUserCity } = require("../../src/userSettings");
 
@@ -26,13 +28,15 @@ module.exports = {
     ),
   async execute(interaction) {
     const targetUser = interaction.targetUser;
+    const targetMember = interaction.targetMember;
+    const displayName = targetMember?.displayName || targetUser.displayName || targetUser.username;
     const saved = getUserCity(targetUser.id);
 
     if (!saved) {
       // If the target user has no saved city, show a modal to the caller
       const modal = new ModalBuilder()
         .setCustomId(`zu2_modal_${targetUser.id}`)
-        .setTitle(`気圧表示: ${targetUser.username}`);
+        .setTitle(`気圧表示: ${displayName}`);
 
       const cityInput = new TextInputBuilder()
         .setCustomId("city_input")
@@ -47,8 +51,9 @@ module.exports = {
       return;
     }
 
-    // If the target user has a saved city, fetch and display publicly!
-    await interaction.deferReply({ ephemeral: false });
+    // If the target user has a saved city, fetch and display!
+    const isEphemeral = !interaction.inGuild();
+    await interaction.deferReply({ ephemeral: isEphemeral });
 
     try {
       const response = await fetch(`https://zutool.jp/api/getweatherstatus/${saved.cityCode}`);
@@ -66,9 +71,16 @@ module.exports = {
       const content = formatWeatherData(data, "sl_today", false);
       const dateRow = createButtonsRow("sl_today", false);
 
+      const clearButton = new ButtonBuilder()
+        .setCustomId(`zu2_clear_${targetUser.id}`)
+        .setLabel(`${displayName} の地域を解除`)
+        .setStyle(ButtonStyle.Danger);
+
+      const clearRow = new ActionRowBuilder().addComponents(clearButton);
+
       const replyMessage = await interaction.editReply({
-        content: `<@${targetUser.id}> の地域の気圧予報（登録地: ${saved.cityName}）\n${content}`,
-        components: [dateRow],
+        content: `<@${targetUser.id}> の地域の気圧予報\n${content}`,
+        components: [dateRow, clearRow],
       });
 
       const collector = replyMessage.createMessageComponentCollector({
@@ -80,6 +92,8 @@ module.exports = {
       let currentValue = "sl_today";
 
       collector.on("collect", async (i) => {
+        if (i.customId.startsWith("zu2_clear_")) return; // Handled globally
+
         const matchedConfig = DATE_CONFIGS.find(cfg => `zu2_${cfg.value}` === i.customId);
         if (matchedConfig) {
           currentValue = matchedConfig.value;
@@ -89,16 +103,18 @@ module.exports = {
         const updatedDateRow = createButtonsRow(currentValue, false);
 
         await i.update({
-          content: `<@${targetUser.id}> の地域の気圧予報（登録地: ${saved.cityName}）\n${updatedContent}`,
-          components: [updatedDateRow],
+          content: `<@${targetUser.id}> の地域の気圧予報\n${updatedContent}`,
+          components: [updatedDateRow, clearRow],
         });
       });
 
       collector.on("end", async () => {
         try {
           const disabledDateRow = createButtonsRow(currentValue, true);
+          const disabledClearButton = ButtonBuilder.from(clearButton).setDisabled(true);
+          const disabledClearRow = new ActionRowBuilder().addComponents(disabledClearButton);
           await interaction.editReply({
-            components: [disabledDateRow],
+            components: [disabledDateRow, disabledClearRow],
           });
         } catch (err) {
           // Ignored

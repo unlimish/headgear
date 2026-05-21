@@ -1,5 +1,5 @@
 const { Events, ButtonBuilder, ButtonStyle, ActionRowBuilder, ComponentType } = require("discord.js");
-const { setUserCity } = require("../src/userSettings");
+const { setUserCity, clearUserCity } = require("../src/userSettings");
 const { getCityInfo } = require("../src/getCityCode");
 
 module.exports = {
@@ -40,10 +40,23 @@ module.exports = {
         const targetUserId = interaction.customId.replace("zu2_modal_", "");
         const cityNameInput = interaction.fields.getTextInputValue("city_input");
 
-        // Defer reply (publicly!)
-        await interaction.deferReply({ ephemeral: false });
+        // Defer reply
+        const isEphemeral = !interaction.inGuild();
+        await interaction.deferReply({ ephemeral: isEphemeral });
 
         try {
+          const targetUser = await interaction.client.users.fetch(targetUserId);
+          let displayName = targetUser.displayName || targetUser.username;
+          if (interaction.guild) {
+            try {
+              const targetMember = await interaction.guild.members.fetch(targetUserId);
+              if (targetMember) {
+                displayName = targetMember.displayName;
+              }
+            } catch (err) {
+              // Ignore if fetching member fails or not in guild
+            }
+          }
           const cityInfo = await getCityInfo(cityNameInput);
           if (!cityInfo) {
             await interaction.editReply({
@@ -69,14 +82,14 @@ module.exports = {
           const dateRow = createButtonsRow("sl_today", false);
 
           const saveButton = new ButtonBuilder()
-            .setCustomId(`zu2_save_${cityInfo.cityCode}_${cityInfo.cityName}`)
-            .setLabel("この地域をマイ地域に保存")
+            .setCustomId(`zu2_save_${targetUserId}_${cityInfo.cityCode}_${cityInfo.cityName}`)
+            .setLabel(`この地域を @${displayName} の地域として保存`)
             .setStyle(ButtonStyle.Success);
 
           const saveRow = new ActionRowBuilder().addComponents(saveButton);
 
           const replyMessage = await interaction.editReply({
-            content: `<@${targetUserId}> の地域の気圧予報（仮設定: ${cityInfo.cityName}）\n${content}`,
+            content: `<@${targetUserId}> の地域の気圧予報\n${content}`,
             components: [dateRow, saveRow],
           });
 
@@ -89,7 +102,7 @@ module.exports = {
           let currentValue = "sl_today";
 
           collector.on("collect", async (i) => {
-            if (i.customId.startsWith("zu2_save_")) return; // Handled globally by the next block
+            if (i.customId.startsWith("zu2_save_") || i.customId.startsWith("zu2_clear_")) return; // Handled globally
 
             const matchedConfig = DATE_CONFIGS.find(cfg => `zu2_${cfg.value}` === i.customId);
             if (matchedConfig) {
@@ -99,19 +112,26 @@ module.exports = {
             const updatedContent = formatWeatherData(data, currentValue, false);
             const updatedDateRow = createButtonsRow(currentValue, false);
 
+            // Fetch the current message components to keep the second row intact
+            const currentMessage = await interaction.channel.messages.fetch(replyMessage.id);
+            const currentSaveRow = ActionRowBuilder.from(currentMessage.components[1]);
+
             await i.update({
-              content: `<@${targetUserId}> の地域の気圧予報（仮設定: ${cityInfo.cityName}）\n${updatedContent}`,
-              components: [updatedDateRow, saveRow],
+              content: `<@${targetUserId}> の地域の気圧予報\n${updatedContent}`,
+              components: [updatedDateRow, currentSaveRow],
             });
           });
 
           collector.on("end", async () => {
             try {
               const disabledDateRow = createButtonsRow(currentValue, true);
-              const disabledSaveButton = ButtonBuilder.from(saveButton).setDisabled(true);
-              const disabledSaveRow = new ActionRowBuilder().addComponents(disabledSaveButton);
+              const currentMessage = await interaction.channel.messages.fetch(replyMessage.id);
+              const currentSecondRow = ActionRowBuilder.from(currentMessage.components[1]);
+              // Disable the buttons in the second row
+              currentSecondRow.components.forEach(btn => btn.setDisabled(true));
+
               await interaction.editReply({
-                components: [disabledDateRow, disabledSaveRow],
+                components: [disabledDateRow, currentSecondRow],
               });
             } catch (err) {
               // Ignored
@@ -131,15 +151,107 @@ module.exports = {
     if (interaction.isButton()) {
       if (interaction.customId.startsWith("zu2_save_")) {
         const parts = interaction.customId.split("_");
-        const cityCode = parts[2];
-        const cityName = parts.slice(3).join("_");
+        const targetUserId = parts[2];
+        const cityCode = parts[3];
+        const cityName = parts.slice(4).join("_");
 
-        setUserCity(interaction.user.id, cityCode, cityName);
+        const originalUser = interaction.message?.interaction?.user;
+        const isOriginalSubmitter = originalUser && interaction.user.id === originalUser.id;
 
-        await interaction.reply({
+        if (interaction.user.id !== targetUserId && !isOriginalSubmitter) {
+          await interaction.reply({
+            content: `この操作は <@${targetUserId}> 本人、または予報を表示させたユーザーのみ実行できます。`,
+            ephemeral: true,
+          });
+          return;
+        }
+
+        setUserCity(targetUserId, cityCode, cityName);
+
+        const targetUser = await interaction.client.users.fetch(targetUserId);
+        let targetDisplayName = targetUser.displayName || targetUser.username;
+        if (interaction.guild) {
+          try {
+            const targetMember = await interaction.guild.members.fetch(targetUserId);
+            if (targetMember) {
+              targetDisplayName = targetMember.displayName;
+            }
+          } catch (err) {
+            // Ignore
+          }
+        }
+
+        // Update the button state to clear button in the message!
+        const clearButton = new ButtonBuilder()
+          .setCustomId(`zu2_clear_${targetUserId}`)
+          .setLabel(`${targetDisplayName} の地域を解除`)
+          .setStyle(ButtonStyle.Danger);
+
+        const dateRow = ActionRowBuilder.from(interaction.message.components[0]);
+        const clearRow = new ActionRowBuilder().addComponents(clearButton);
+
+        await interaction.update({
+          components: [dateRow, clearRow]
+        });
+
+        // Also send ephemeral success message
+        await interaction.followUp({
           content: `デフォルトの都市を「**${cityName}**」(コード: ${cityCode}) に設定しました！`,
           ephemeral: true,
         });
+        return;
+      }
+
+      if (interaction.customId.startsWith("zu2_clear_")) {
+        const parts = interaction.customId.split("_");
+        const targetUserId = parts[2];
+
+        const originalUser = interaction.message?.interaction?.user;
+        const isOriginalSubmitter = originalUser && interaction.user.id === originalUser.id;
+
+        if (interaction.user.id !== targetUserId && !isOriginalSubmitter) {
+          await interaction.reply({
+            content: `この操作は <@${targetUserId}> 本人、または予報を表示させたユーザーのみ実行できます。`,
+            ephemeral: true,
+          });
+          return;
+        }
+
+        clearUserCity(targetUserId);
+
+        const targetUser = await interaction.client.users.fetch(targetUserId);
+        let targetDisplayName = targetUser.displayName || targetUser.username;
+        if (interaction.guild) {
+          try {
+            const targetMember = await interaction.guild.members.fetch(targetUserId);
+            if (targetMember) {
+              targetDisplayName = targetMember.displayName;
+            }
+          } catch (err) {
+            // Ignore
+          }
+        }
+
+        // Replace the clear button with a disabled button indicating it has been cleared
+        const disabledButton = new ButtonBuilder()
+          .setCustomId(`zu2_cleared_${targetUserId}`)
+          .setLabel(`${targetDisplayName} の地域を解除しました`)
+          .setStyle(ButtonStyle.Secondary)
+          .setDisabled(true);
+
+        const dateRow = ActionRowBuilder.from(interaction.message.components[0]);
+        const disabledRow = new ActionRowBuilder().addComponents(disabledButton);
+
+        await interaction.update({
+          components: [dateRow, disabledRow]
+        });
+
+        // Also send ephemeral success message
+        await interaction.followUp({
+          content: "デフォルトの都市設定を解除しました。",
+          ephemeral: true,
+        });
+        return;
       }
     }
   },
