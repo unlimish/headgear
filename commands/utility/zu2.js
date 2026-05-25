@@ -11,7 +11,7 @@ const {
   InteractionContextType,
 } = require("discord.js");
 const config = require("../../config.json");
-const { getCityCode } = require("../../src/getCityCode");
+const { getCityInfo } = require("../../src/getCityCode");
 const { getUserCity } = require("../../src/userSettings");
 const { fetchForecast, formatToZutool } = require("../../src/openMeteo");
 
@@ -99,15 +99,19 @@ const handleWeatherCommand = async (interaction, opt_date, opt_place) => {
   await interaction.deferReply({ ephemeral: isEphemeral });
 
   let placeId = String(config.placeId);
+  let nameOfPlace = "Default City";
   const saved = getUserCity(interaction.user.id);
   if (saved) {
     placeId = String(saved.cityCode);
+    nameOfPlace = saved.cityName;
   }
 
   if (opt_place) {
-    const search_placeId = await getCityCode(opt_place);
-    console.log("search_placeId: " + `${search_placeId}`);
-    if (search_placeId != -1) placeId = String(search_placeId);
+    const cityInfo = await getCityInfo(opt_place);
+    if (cityInfo) {
+      placeId = String(cityInfo.cityCode);
+      nameOfPlace = cityInfo.cityName;
+    }
   }
 
   const apiUrl = `https://zutool.jp/api/getweatherstatus/${placeId}`;
@@ -118,13 +122,6 @@ const handleWeatherCommand = async (interaction, opt_date, opt_place) => {
     if (String(placeId).startsWith("om:")) {
       const [_, coords] = String(placeId).split(":");
       const [lat, lon] = coords.split(",").map(Number);
-      
-      let nameOfPlace = "Global City";
-      if (opt_place) {
-        nameOfPlace = opt_place;
-      } else if (saved && saved.cityCode === placeId) {
-        nameOfPlace = saved.cityName;
-      }
       
       console.log(`[zu2] Fetching from Open-Meteo for coordinates: lat=${lat}, lon=${lon}`);
       const omData = await fetchForecast(lat, lon);
