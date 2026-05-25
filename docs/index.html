@@ -22,10 +22,6 @@
             --discord-color: #5865f2;
             --discord-hover: #4752c4;
             --glow-color: rgba(79, 70, 229, 0.05);
-            --hero-gradient-start: #111827;
-            --hero-gradient-end: #4f46e5;
-            --logo-gradient-start: #4338ca;
-            --logo-gradient-end: #6366f1;
             --lang-switch-bg: rgba(0, 0, 0, 0.04);
             --command-type-bg: rgba(0, 0, 0, 0.04);
             --command-type-border: rgba(0, 0, 0, 0.08);
@@ -47,10 +43,6 @@
                 --discord-color: #5865f2;
                 --discord-hover: #4752c4;
                 --glow-color: rgba(99, 102, 241, 0.15);
-                --hero-gradient-start: #ffffff;
-                --hero-gradient-end: #a5b4fc;
-                --logo-gradient-start: #a5b4fc;
-                --logo-gradient-end: #6366f1;
                 --lang-switch-bg: rgba(255, 255, 255, 0.05);
                 --command-type-bg: rgba(255, 255, 255, 0.05);
                 --command-type-border: rgba(255, 255, 255, 0.1);
@@ -124,9 +116,7 @@
             font-size: 1.5rem;
             font-weight: 800;
             letter-spacing: 0.05em;
-            background: linear-gradient(to right, var(--logo-gradient-start), var(--logo-gradient-end));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: var(--accent-primary);
         }
 
         .lang-switch {
@@ -189,9 +179,7 @@
             line-height: 1.2;
             margin-bottom: 1.5rem;
             letter-spacing: -0.02em;
-            background: linear-gradient(to bottom right, var(--hero-gradient-start) 30%, var(--hero-gradient-end));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: var(--text-primary);
         }
 
         .hero p {
@@ -297,9 +285,7 @@
             font-size: 1.75rem;
             margin-bottom: 2rem;
             text-align: center;
-            background: linear-gradient(to right, #ffffff, #a5b4fc);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: var(--text-primary);
         }
 
         .command-item {
