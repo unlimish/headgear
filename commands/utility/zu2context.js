@@ -12,6 +12,7 @@ const {
   ButtonStyle,
 } = require("discord.js");
 const { getUserCity } = require("../../src/userSettings");
+const { fetchForecast, formatToZutool } = require("../../src/openMeteo");
 
 module.exports = {
   data: new ContextMenuCommandBuilder()
@@ -56,9 +57,18 @@ module.exports = {
     await interaction.deferReply({ ephemeral: isEphemeral });
 
     try {
-      const response = await fetch(`https://zutool.jp/api/getweatherstatus/${saved.cityCode}`);
-      const responseData = await response.text();
-      const data = JSON.parse(responseData);
+      let data;
+      if (String(saved.cityCode).startsWith("om:")) {
+        const [_, coords] = String(saved.cityCode).split(":");
+        const [lat, lon] = coords.split(",").map(Number);
+        console.log(`[zu2context] Fetching from Open-Meteo for coordinates: lat=${lat}, lon=${lon}`);
+        const omData = await fetchForecast(lat, lon);
+        data = formatToZutool(omData, saved.cityName);
+      } else {
+        const response = await fetch(`https://zutool.jp/api/getweatherstatus/${saved.cityCode}`);
+        const responseData = await response.text();
+        data = JSON.parse(responseData);
+      }
 
       const zu2Command = interaction.client.commands.get("zu2");
       if (!zu2Command) {

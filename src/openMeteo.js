@@ -30,6 +30,7 @@ async function geocodeCity(cityName) {
         name: result.name
       };
     }
+    throw new Error("No geocoding results found");
   } catch (error) {
     console.warn(`Geocoding fetch failed for "${cityName}", using fallback:`, error.message);
   }
@@ -58,6 +59,7 @@ async function fetchForecast(lat, lon) {
     if (data && data.hourly) {
       return data;
     }
+    throw new Error(data && data.reason ? data.reason : "API response missing hourly data");
   } catch (error) {
     console.warn(`Weather forecast fetch failed for lat=${lat}, lon=${lon}, generating mock data:`, error.message);
   }
