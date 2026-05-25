@@ -16,8 +16,13 @@ const GEOCODE_FALLBACKS = {
  * Falls back to predefined cities or a default if network fails.
  */
 async function geocodeCity(cityName) {
-  const cleanName = cityName.trim().toLowerCase();
-  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=1&language=en&format=json`;
+  let searchQuery = cityName.trim();
+  // If the input contains a comma, take the first part as the city name (e.g. "Bemidji, Minnesota" -> "Bemidji")
+  if (searchQuery.includes(',')) {
+    searchQuery = searchQuery.split(',')[0].trim();
+  }
+  const cleanName = searchQuery.toLowerCase();
+  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(searchQuery)}&count=1&language=en&format=json`;
 
   try {
     const response = await fetch(url, { signal: AbortSignal.timeout(3000) });
