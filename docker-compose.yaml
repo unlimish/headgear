@@ -6,7 +6,7 @@ services:
       dockerfile: Dockerfile
     volumes:
       - headgear_data:/app/data
-      - headgear_logs:/app/logs
+      - ./logs:/app/logs
     command: sh -c "cd /app/ && node deploy-commands.js && node index.js"
     restart: always
     networks:
@@ -14,7 +14,6 @@ services:
 
 volumes:
   headgear_data:
-  headgear_logs:
 
 networks:
   discord_network:
