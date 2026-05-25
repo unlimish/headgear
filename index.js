@@ -1,3 +1,4 @@
+const { purgeOldLogs } = require("./src/logger");
 const fs = require("node:fs");
 const path = require("node:path");
 const { Client, Collection, GatewayIntentBits, ActivityType, Events } = require("discord.js");
@@ -98,6 +99,12 @@ client.on(Events.ClientReady, () => {
   setInterval(() => {
     updatePressureActivity(client);
   }, 900000); // 15 mins
+
+  // Run log rotation on startup and every 24 hours
+  purgeOldLogs();
+  setInterval(() => {
+    purgeOldLogs();
+  }, 86400000); // 24 hours
 });
 
 const eventsPath = path.join(__dirname, "events");
