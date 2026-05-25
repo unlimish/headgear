@@ -95,6 +95,9 @@ const formatWeatherData = (data, selectedValue, isDefault) => {
 };
 
 const handleWeatherCommand = async (interaction, opt_date, opt_place) => {
+  const isEphemeral = !interaction.inGuild();
+  await interaction.deferReply({ ephemeral: isEphemeral });
+
   let placeId = String(config.placeId);
   const saved = getUserCity(interaction.user.id);
   if (saved) {
@@ -110,8 +113,6 @@ const handleWeatherCommand = async (interaction, opt_date, opt_place) => {
   const apiUrl = `https://zutool.jp/api/getweatherstatus/${placeId}`;
   const initialValue = opt_date || "sl_today";
 
-  const isEphemeral = !interaction.inGuild();
-  await interaction.deferReply({ ephemeral: isEphemeral });
   try {
     let data;
     if (String(placeId).startsWith("om:")) {
