@@ -8,7 +8,9 @@ const GEOCODE_FALLBACKS = {
   "los angeles": { lat: 34.0522, lon: -118.2437, name: "Los Angeles" },
   "seoul": { lat: 37.5665, lon: 126.9780, name: "Seoul" },
   "taipei": { lat: 25.0330, lon: 121.5654, name: "Taipei" },
-  "singapore": { lat: 1.3521, lon: 103.8198, name: "Singapore" }
+  "singapore": { lat: 1.3521, lon: 103.8198, name: "Singapore" },
+  "haneda": { lat: 35.5491, lon: 139.7456, name: "Haneda" },
+  "hnd": { lat: 35.5491, lon: 139.7456, name: "Haneda" }
 };
 
 /**
