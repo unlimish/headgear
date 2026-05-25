@@ -56,7 +56,7 @@ async function geocodeCity(cityName) {
  * Automatically requests times in Asia/Tokyo timezone to align with bot local JST.
  */
 async function fetchForecast(lat, lon) {
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=pressure_msl,temperature_2m,weather_code&timezone=Asia%2FTokyo`;
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=pressure_msl,temperature_2m,weather_code&timezone=Asia%2FTokyo&past_days=2`;
 
   try {
     const response = await fetch(url, { signal: AbortSignal.timeout(3000) });
