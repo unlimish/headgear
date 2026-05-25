@@ -1,3 +1,5 @@
+const { geocodeCity } = require("./openMeteo");
+
 async function getCityInfo(opt_place) {
   try {
     let enc_place = encodeURI(opt_place);
@@ -10,16 +12,35 @@ async function getCityInfo(opt_place) {
     console.log("\x1b[38;5;34m[getCityInfo] JSON GET \n\x1b[0m" + responseData);
     const data = JSON.parse(responseData);
     const resultParse = JSON.parse(data.result);
-    if (!Array.isArray(resultParse) || resultParse.length === 0) {
-      console.log(`[getCityInfo] No city found for: ${opt_place}`);
-      return null;
+    if (Array.isArray(resultParse) && resultParse.length > 0) {
+      const cityCode = Number(resultParse[0].city_code);
+      const cityName = resultParse[0].name;
+      console.log(`[getCityInfo] Zutool found cityCode: ${cityCode}, cityName: ${cityName}`);
+      return { cityCode, cityName };
     }
-    const cityCode = Number(resultParse[0].city_code);
-    const cityName = resultParse[0].name;
-    console.log(`[getCityInfo] cityCode: ${cityCode}, cityName: ${cityName}`);
-    return { cityCode, cityName };
+    
+    // Fallback to Open-Meteo Geocoding
+    console.log(`[getCityInfo] Zutool returned no results. Checking Open-Meteo geocoding for: ${opt_place}`);
+    const geo = await geocodeCity(opt_place);
+    if (geo) {
+      const cityCode = `om:${geo.lat},${geo.lon}`;
+      const cityName = geo.name;
+      console.log(`[getCityInfo] Open-Meteo found cityCode: ${cityCode}, cityName: ${cityName}`);
+      return { cityCode, cityName };
+    }
+    
+    console.log(`[getCityInfo] No city found via Zutool or Open-Meteo for: ${opt_place}`);
+    return null;
   } catch (error) {
-    console.error("Error in getCityInfo:", error);
+    console.warn("Zutool getCityInfo failed, attempting Open-Meteo geocoding fallback for:", opt_place);
+    try {
+      const geo = await geocodeCity(opt_place);
+      if (geo) {
+        return { cityCode: `om:${geo.lat},${geo.lon}`, cityName: geo.name };
+      }
+    } catch (e) {
+      console.error("Both Zutool and Open-Meteo geocoding failed:", e);
+    }
     return null;
   }
 }

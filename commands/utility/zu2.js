@@ -13,6 +13,7 @@ const {
 const config = require("../../config.json");
 const { getCityCode } = require("../../src/getCityCode");
 const { getUserCity } = require("../../src/userSettings");
+const { fetchForecast, formatToZutool } = require("../../src/openMeteo");
 
 const DATE_CONFIGS = [
   { value: "sl_yesterday", label: "昨日", apiField: "yesterday", englishLabel: "Yesterday" },
@@ -112,9 +113,26 @@ const handleWeatherCommand = async (interaction, opt_date, opt_place) => {
   const isEphemeral = !interaction.inGuild();
   await interaction.deferReply({ ephemeral: isEphemeral });
   try {
-    const response = await fetch(apiUrl);
-    const responseData = await response.text();
-    const data = JSON.parse(responseData);
+    let data;
+    if (String(placeId).startsWith("om:")) {
+      const [_, coords] = String(placeId).split(":");
+      const [lat, lon] = coords.split(",").map(Number);
+      
+      let nameOfPlace = "Global City";
+      if (opt_place) {
+        nameOfPlace = opt_place;
+      } else if (saved && saved.cityCode === placeId) {
+        nameOfPlace = saved.cityName;
+      }
+      
+      console.log(`[zu2] Fetching from Open-Meteo for coordinates: lat=${lat}, lon=${lon}`);
+      const omData = await fetchForecast(lat, lon);
+      data = formatToZutool(omData, nameOfPlace);
+    } else {
+      const response = await fetch(apiUrl);
+      const responseData = await response.text();
+      data = JSON.parse(responseData);
+    }
 
     const isDefault = !opt_place && !saved;
 
