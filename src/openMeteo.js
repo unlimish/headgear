@@ -120,55 +120,57 @@ async function fetchForecast(lat, lon) {
   return { hourly };
 }
 
-/**
- * Calculates Zutool-like pressure levels (0 = Ok, 2 = Caution, 3 = Warning, 4 = Bomb)
- * based on hourly pressure changes (both past and future drops).
- */
 function calculatePressureLevels(hourly) {
   const pressureMsl = hourly.pressure_msl;
   const levels = [];
 
+  const getCorrectedP = (w) => {
+    const p = pressureMsl[w];
+    const timeStr = hourly.time[w];
+    const hr = parseInt(timeStr.split('T')[1].split(':')[0], 10);
+    const tide = 0.7 * Math.cos(2 * Math.PI * (hr - 9) / 12) + 0.3 * Math.cos(2 * Math.PI * (hr - 6) / 24);
+    return p - tide;
+  };
+
   for (let i = 0; i < pressureMsl.length; i++) {
     const P = pressureMsl[i];
+    const P_corr = getCorrectedP(i);
 
     // Future drop (next 6h and next 12h)
-    let minFut6h = P;
+    let minFut6h = P_corr;
     const end6 = Math.min(i + 6, pressureMsl.length - 1);
     for (let w = i + 1; w <= end6; w++) {
-      if (pressureMsl[w] < minFut6h) minFut6h = pressureMsl[w];
+      const p = getCorrectedP(w);
+      if (p < minFut6h) minFut6h = p;
     }
-    const futDrop6h = P - minFut6h;
+    const futDrop6h = P_corr - minFut6h;
 
-    let minFut12h = P;
+    let minFut12h = P_corr;
     const end12 = Math.min(i + 12, pressureMsl.length - 1);
     for (let w = i + 1; w <= end12; w++) {
-      if (pressureMsl[w] < minFut12h) minFut12h = pressureMsl[w];
+      const p = getCorrectedP(w);
+      if (p < minFut12h) minFut12h = p;
     }
-    const futDrop12h = P - minFut12h;
+    const futDrop12h = P_corr - minFut12h;
 
     // Past drop (past 6h and past 12h)
-    let maxPast6h = P;
+    let maxPast6h = P_corr;
     const start6 = Math.max(i - 6, 0);
     for (let w = start6; w < i; w++) {
-      if (pressureMsl[w] > maxPast6h) maxPast6h = pressureMsl[w];
+      const p = getCorrectedP(w);
+      if (p > maxPast6h) maxPast6h = p;
     }
-    const pastDrop6h = maxPast6h - P;
+    const pastDrop6h = maxPast6h - P_corr;
 
-    let maxPast12h = P;
-    const start12 = Math.max(i - 12, 0);
-    for (let w = start12; w < i; w++) {
-      if (pressureMsl[w] > maxPast12h) maxPast12h = pressureMsl[w];
-    }
-    const pastDrop12h = maxPast12h - P;
-
-    // Recovery check: has the pressure risen by >= 0.3 hPa from recent minimum in past 3h?
-    let minRecent3h = P;
+    // Recovery check: has the pressure risen by >= 0.2 hPa from recent minimum in past 3h?
+    let minRecent3h = P_corr;
     const start3 = Math.max(i - 3, 0);
     for (let w = start3; w < i; w++) {
-      if (pressureMsl[w] < minRecent3h) minRecent3h = pressureMsl[w];
+      const p = getCorrectedP(w);
+      if (p < minRecent3h) minRecent3h = p;
     }
-    const recoveryAmount = P - minRecent3h;
-    const isRecovering = recoveryAmount >= 0.3;
+    const recoveryAmount = P_corr - minRecent3h;
+    const isRecovering = recoveryAmount >= 0.2;
 
     // Combine features to assign warning levels
     let level = 0;
@@ -176,12 +178,15 @@ function calculatePressureLevels(hourly) {
     if (isRecovering) {
       level = 0;
     } else {
-      const maxDrop = Math.max(futDrop6h, futDrop12h * 0.7, pastDrop6h);
-      if (maxDrop >= 2.5) {
+      const maxRawDrop = Math.max(futDrop6h, futDrop12h * 0.6, pastDrop6h);
+      const pressurePenalty = Math.max(0, 1013.0 - P) * 0.1;
+      const adjustedDrop = maxRawDrop + pressurePenalty;
+
+      if (adjustedDrop >= 3.2) {
         level = 4; // Bomb
-      } else if (maxDrop >= 1.5) {
+      } else if (adjustedDrop >= 2.2) {
         level = 3; // Warning
-      } else if (maxDrop >= 0.8) {
+      } else if (adjustedDrop >= 1.8) {
         level = 2; // Caution
       }
     }
